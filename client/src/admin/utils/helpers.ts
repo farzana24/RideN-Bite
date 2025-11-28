@@ -7,6 +7,10 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatCurrency(amountCents: number, currency: string = "BDT"): string {
     const amount = amountCents / 100;
+    // Use Taka symbol for BDT
+    if (currency === "BDT") {
+        return `৳${amount.toLocaleString("en-BD", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
     return new Intl.NumberFormat("en-BD", {
         style: "currency",
         currency: currency,

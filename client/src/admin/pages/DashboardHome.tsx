@@ -7,7 +7,7 @@ import { Badge } from "../components/ui/badge";
 import { mockApi } from "../services/mockData";
 import { formatCurrency, getRelativeTime } from "../utils/helpers";
 import type { KPIMetrics, OrderData } from "../types";
-import { DollarSign, ShoppingCart, Truck, Clock, Store } from "lucide-react";
+import { Banknote, ShoppingCart, Truck, Clock, Store } from "lucide-react";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
@@ -90,7 +90,7 @@ export function DashboardHome() {
                     title="Revenue (24h)"
                     value={formatCurrency(kpis.revenue24h)}
                     change={kpis.revenueChange}
-                    icon={<DollarSign />}
+                    icon={<Banknote />}
                     description="from yesterday"
                 />
                 <KPICard

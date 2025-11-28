@@ -8,7 +8,13 @@ const registerSchema = z.object({
     email: z.string().email(),
     password: z.string().min(6),
     name: z.string().min(2),
-    role: z.enum(['CUSTOMER', 'RESTAURANT', 'RIDER', 'ADMIN']).optional(),
+    phone: z.string().optional(),
+    role: z.enum(['CUSTOMER', 'RESTAURANT', 'RIDER']).default('CUSTOMER'),
+    // Restaurant-specific
+    businessName: z.string().optional(),
+    address: z.string().optional(),
+    // Rider-specific
+    vehicleType: z.enum(['BIKE', 'CAR', 'BICYCLE', 'SCOOTER']).optional(),
 });
 
 const loginSchema = z.object({

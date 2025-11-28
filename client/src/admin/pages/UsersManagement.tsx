@@ -47,8 +47,8 @@ export function UsersManagement() {
         try {
             await mockApi.suspendUser(user.id, !user.suspended);
             toast({
-                title: user.suspended ? "User Activated" : "User Suspended",
-                description: `${user.name} has been ${user.suspended ? "activated" : "suspended"}.`,
+                title: user.suspended ? "User Suspended" : "User Activated",
+                description: `${user.name} has been ${user.suspended ? "suspended" : "activated"}.`,
             });
             loadUsers();
         } catch (error) {

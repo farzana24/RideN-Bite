@@ -270,6 +270,15 @@ export const mockApi = {
         return { success: true };
     },
 
+    async suspendRestaurant(id: number, suspended: boolean): Promise<{ success: boolean }> {
+        await delay(500);
+        const restaurant = mockRestaurants.find((r) => r.id === id);
+        if (restaurant) {
+            restaurant.suspended = suspended;
+        }
+        return { success: true };
+    },
+
     // Users
     async getUsers(params: FilterParams = {}): Promise<PaginatedResponse<UserData>> {
         await delay(400);

@@ -54,6 +54,7 @@ export interface RestaurantData {
     lat: number | null;
     lng: number | null;
     approved: boolean;
+    suspended?: boolean;
     createdAt: string;
     updatedAt: string;
     menuItemsCount?: number;

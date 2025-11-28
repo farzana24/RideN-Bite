@@ -167,9 +167,13 @@ export function RestaurantsManagement() {
                                                     {restaurant.address}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Badge variant={restaurant.approved ? "success" : "warning"}>
-                                                        {restaurant.approved ? "Active" : "Pending"}
-                                                    </Badge>
+                                                    {restaurant.suspended ? (
+                                                        <Badge variant="destructive">Suspended</Badge>
+                                                    ) : restaurant.approved ? (
+                                                        <Badge variant="success">Active</Badge>
+                                                    ) : (
+                                                        <Badge variant="warning">Pending</Badge>
+                                                    )}
                                                 </TableCell>
                                                 <TableCell>{restaurant.menuItemsCount || 0}</TableCell>
                                                 <TableCell>{restaurant.ordersCount || 0}</TableCell>
@@ -197,6 +201,31 @@ export function RestaurantsManagement() {
                                                                     Reject
                                                                 </Button>
                                                             </>
+                                                        )}
+                                                        {restaurant.approved && !restaurant.suspended && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={async () => {
+                                                                    try {
+                                                                        await mockApi.suspendRestaurant(restaurant.id, true);
+                                                                        toast({
+                                                                            title: "Restaurant Suspended",
+                                                                            description: `${restaurant.name} has been suspended.`,
+                                                                        });
+                                                                        loadRestaurants();
+                                                                    } catch (error) {
+                                                                        toast({
+                                                                            title: "Error",
+                                                                            description: "Failed to suspend restaurant.",
+                                                                            variant: "destructive",
+                                                                        });
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <X className="mr-1 h-4 w-4" />
+                                                                Suspend
+                                                            </Button>
                                                         )}
                                                         <Button size="sm" variant="ghost">
                                                             <Eye className="h-4 w-4" />
