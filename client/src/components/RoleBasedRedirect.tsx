@@ -17,6 +17,10 @@ function RoleBasedRedirect() {
         return <Navigate to="/restaurant" replace />;
     }
 
+    if (user?.role === 'CUSTOMER') {
+        return <Navigate to="/customer" replace />;
+    }
+
     return <Navigate to="/dashboard" replace />;
 }
 

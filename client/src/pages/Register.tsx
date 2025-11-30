@@ -122,6 +122,10 @@ const Register: React.FC = () => {
                     login(tokens.accessToken, user);
                     if (user.role === 'ADMIN') {
                         navigate('/admin');
+                    } else if (user.role === 'CUSTOMER') {
+                        navigate('/customer');
+                    } else if (user.role === 'RIDER') {
+                        navigate('/rider');
                     } else {
                         navigate('/dashboard');
                     }
