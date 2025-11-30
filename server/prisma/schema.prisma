@@ -75,6 +75,11 @@ model MenuItem {
   currency     String   @default("BDT")
   available    Boolean  @default(true)
   tags         String[]
+  category     String?  // BIRYANI, BURGER, DESSERT, etc.
+  cookingTime  Int?     // in minutes
+  spiceLevel   String?  // MILD, MEDIUM, HOT
+  rating       Float    @default(0.0)
+  imageUrl     String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -218,4 +223,28 @@ model AdminNotification {
   restaurant   Restaurant? @relation(name: "RestaurantAdminNotifications", fields: [restaurantId], references: [id])
   metadata     Json?
   createdAt    DateTime    @default(now())
+}
+
+model Payout {
+  id            Int      @id @default(autoincrement())
+  restaurantId  Int
+  amount        Int      // in cents
+  method        String   // BANK, MOBILE_BANKING
+  accountName   String
+  accountNumber String
+  status        String   @default("PENDING") // PENDING, APPROVED, COMPLETED, REJECTED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model RestaurantSettings {
+  id                Int      @id @default(autoincrement())
+  restaurantId      Int      @unique
+  emailAlerts       Boolean  @default(true)
+  smsAlerts         Boolean  @default(false)
+  pushAlerts        Boolean  @default(true)
+  autoAcceptOrders  Boolean  @default(false)
+  maxCookingLoad    Int      @default(10)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }

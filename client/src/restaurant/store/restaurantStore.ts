@@ -90,6 +90,20 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
                 restaurantApi.getAnalytics(),
                 restaurantApi.getAlerts(),
             ]);
+            
+            // Extract chart data from analytics if available
+            const weeklyEarnings = analytics.monthlyOverview?.slice(0, 7).map((item, i) => ({
+                week: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i] || item.label,
+                earnings: item.value,
+            })) || fallbackWeeklyEarnings;
+
+            const popularDishes = analytics.salesByCategory?.slice(0, 4).map(item => ({
+                name: item.label,
+                orders: item.value,
+            })) || fallbackPopularDishes;
+
+            const orderFrequency = analytics.peakOrderingHours || fallbackOrderFrequency;
+
             set({
                 profile,
                 stats,
@@ -99,9 +113,20 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
                 earningsRows: earningsRes.rows,
                 analytics,
                 alerts,
+                weeklyEarnings,
+                popularDishes,
+                orderFrequency,
             });
         } catch (error) {
-            console.warn("Falling back to mock data", error);
+            console.error("Error fetching restaurant data:", error);
+            if (error instanceof Error) {
+                console.error("Error message:", error.message);
+            }
+            toast({
+                title: "Failed to load data",
+                description: "Using fallback data. Please check your connection and login status.",
+                variant: "destructive",
+            });
         } finally {
             set({ loading: false });
         }

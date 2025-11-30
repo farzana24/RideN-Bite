@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "../../admin/components/ui/card";
 import { Button } from "../../admin/components/ui/button";
 import { Input } from "../../admin/components/ui/input";
 import { useRestaurantStore } from "../store/restaurantStore";
 import { generalSettingsSchema, type GeneralSettingsValues, securitySettingsSchema, type SecuritySettingsValues } from "../types/schemas";
+import { restaurantApi } from "../services/restaurantApi";
 
 const defaultGeneral: GeneralSettingsValues = {
     notification: {
@@ -28,6 +29,21 @@ export function SettingsPage() {
     const updateGeneralSettings = useRestaurantStore((state) => state.updateGeneralSettings);
     const [generalValues, setGeneralValues] = useState<GeneralSettingsValues>(defaultGeneral);
     const [securityValues, setSecurityValues] = useState<SecuritySettingsValues>(defaultSecurity);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadSettings = async () => {
+            try {
+                const settings = await restaurantApi.getGeneralSettings();
+                setGeneralValues(settings);
+            } catch (error) {
+                console.error('Failed to load settings:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadSettings();
+    }, []);
     const [generalError, setGeneralError] = useState<string | null>(null);
 
     const handleGeneralSubmit = async (e: React.FormEvent) => {

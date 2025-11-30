@@ -68,6 +68,10 @@ export const restaurantApi = {
         const { data } = await client.get<AlertPayload[]>(`${base}/alerts`);
         return data;
     },
+    getGeneralSettings: async () => {
+        const { data } = await client.get<GeneralSettingsValues>(`${base}/settings/general`);
+        return data;
+    },
     updateGeneralSettings: async (payload: GeneralSettingsValues) => {
         await client.patch(`${base}/settings/general`, payload);
     },
