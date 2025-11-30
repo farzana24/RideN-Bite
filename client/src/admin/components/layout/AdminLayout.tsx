@@ -8,16 +8,17 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
-    const [darkMode, setDarkMode] = useState(false);
+    const [darkMode, setDarkMode] = useState(() =>
+        document.documentElement.classList.contains("dark")
+    );
 
     const toggleDarkMode = () => {
-        setDarkMode(!darkMode);
-        // Toggle dark class on html element
         document.documentElement.classList.toggle("dark");
+        setDarkMode(!darkMode);
     };
 
     return (
-        <div className={cn("flex h-screen overflow-hidden", darkMode && "dark")}>
+        <div className="flex h-screen overflow-hidden">
             <Sidebar />
             <div className="flex flex-1 flex-col overflow-hidden">
                 <Topbar darkMode={darkMode} onToggleDarkMode={toggleDarkMode} />
