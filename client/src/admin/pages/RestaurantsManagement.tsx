@@ -342,13 +342,19 @@ export function RestaurantsManagement() {
                         </div>
                     ) : restaurantDetails ? (
                         <div className="space-y-6">
-                            <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
-                                <img
-                                    src={restaurantDetails.storefrontImage || "https://images.unsplash.com/photo-1528605248644-14dd04022da1"}
-                                    alt={`${restaurantDetails.name} storefront`}
-                                    className="h-56 w-full object-cover"
-                                />
-                            </div>
+                            {restaurantDetails.storefrontImage ? (
+                                <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
+                                    <img
+                                        src={restaurantDetails.storefrontImage}
+                                        alt={`${restaurantDetails.name} storefront`}
+                                        className="h-56 w-full object-cover"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="flex h-56 w-full items-center justify-center rounded-2xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-800">
+                                    <p className="text-slate-500 dark:text-slate-400">No image provided</p>
+                                </div>
+                            )}
                             <div className="grid gap-4 md:grid-cols-2">
                                 <div>
                                     <p className="text-xs uppercase tracking-wide text-slate-500">Business name</p>

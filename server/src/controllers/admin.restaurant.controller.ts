@@ -42,6 +42,12 @@ export class AdminRestaurantController {
                                 id: true,
                                 name: true,
                                 email: true,
+                                phone: true,
+                                restaurantProfile: {
+                                    select: {
+                                        storefrontImage: true,
+                                    },
+                                },
                             },
                         },
                         menuItems: true,
@@ -69,6 +75,8 @@ export class AdminRestaurantController {
                 address: restaurant.address,
                 lat: restaurant.lat,
                 lng: restaurant.lng,
+                phone: restaurant.owner.phone,
+                storefrontImage: restaurant.owner.restaurantProfile?.storefrontImage,
                 approved: restaurant.approved,
                 suspended: false, // TODO: Add suspended field to schema
                 createdAt: restaurant.createdAt.toISOString(),
@@ -109,6 +117,12 @@ export class AdminRestaurantController {
                             id: true,
                             name: true,
                             email: true,
+                            phone: true,
+                            restaurantProfile: {
+                                select: {
+                                    storefrontImage: true,
+                                },
+                            },
                         },
                     },
                     _count: {
@@ -138,6 +152,8 @@ export class AdminRestaurantController {
                     address: restaurant.address,
                     lat: restaurant.lat,
                     lng: restaurant.lng,
+                    phone: restaurant.owner.phone,
+                    storefrontImage: restaurant.owner.restaurantProfile?.storefrontImage,
                     approved: restaurant.approved,
                     createdAt: restaurant.createdAt.toISOString(),
                     updatedAt: restaurant.updatedAt.toISOString(),
