@@ -65,6 +65,8 @@ export interface AdminNotification {
     createdAt: string;
 }
 
+export type AccountStatus = 'PENDING' | 'ACTIVE' | 'REJECTED' | 'SUSPENDED';
+
 export interface RestaurantData {
     id: number;
     ownerId: number;
@@ -77,8 +79,7 @@ export interface RestaurantData {
     address: string;
     lat: number | null;
     lng: number | null;
-    approved: boolean;
-    suspended?: boolean;
+    status: AccountStatus;
     storefrontImage?: string;
     bannerImage?: string;
     cuisines?: string[];

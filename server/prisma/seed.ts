@@ -112,7 +112,6 @@ async function main() {
                 address: '27 Gulshan Avenue, Dhaka',
                 lat: 23.7805733,
                 lng: 90.4139857,
-                approved: true,
             },
         });
 

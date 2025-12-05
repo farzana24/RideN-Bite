@@ -47,6 +47,9 @@ model User {
   rider             Rider?
   riderProfile      RiderProfile?
   orders            Order[]
+  addresses         CustomerAddress[]
+  favorites         Favorite[]
+  reviews           Review[]
 }
 
 model Restaurant {
@@ -56,7 +59,6 @@ model Restaurant {
   address   String
   lat       Float?
   lng       Float?
-  approved  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -64,6 +66,8 @@ model Restaurant {
   menuItems MenuItem[]
   orders    Order[]
   notifications AdminNotification[] @relation("RestaurantAdminNotifications")
+  favorites Favorite[]
+  reviews   Review[]
 }
 
 model MenuItem {
@@ -111,20 +115,26 @@ enum OrderStatus {
 }
 
 model Order {
-  id           Int         @id @default(autoincrement())
-  userId       Int
-  restaurantId Int
-  riderId      Int?
-  status       OrderStatus @default(PENDING)
-  totalCents   Int
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id              Int         @id @default(autoincrement())
+  userId          Int
+  restaurantId    Int
+  riderId         Int?
+  status          OrderStatus @default(PENDING)
+  totalCents      Int
+  deliveryAddress String?
+  deliveryLat     Float?
+  deliveryLng     Float?
+  deliveryFee     Int         @default(0)
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
   user       User        @relation(fields: [userId], references: [id])
   restaurant Restaurant  @relation(fields: [restaurantId], references: [id])
   rider      Rider?      @relation(fields: [riderId], references: [id])
   items      OrderItem[]
   payment    Payment?
+  review     Review?
 }
 
 model OrderItem {
@@ -247,4 +257,55 @@ model RestaurantSettings {
   maxCookingLoad    Int      @default(10)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+}
+
+// Customer-specific models
+
+model CustomerAddress {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  label     String   // "Home", "Work", "Other"
+  street    String
+  city      String
+  area      String?
+  lat       Float?
+  lng       Float?
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Favorite {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  restaurantId Int
+  createdAt    DateTime @default(now())
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, restaurantId])
+  @@index([userId])
+}
+
+model Review {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  orderId      Int      @unique
+  restaurantId Int
+  rating       Int      // 1-5
+  comment      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order      Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([restaurantId])
 }

@@ -51,7 +51,6 @@ export class AuthService {
                         ownerId: user.id,
                         name: businessName,
                         address,
-                        approved: false, // Pending approval
                     },
                 });
 
@@ -177,9 +176,18 @@ export class AuthService {
 
         // If the user is a restaurant, ensure it has been approved
         if (user.role === 'RESTAURANT') {
-            const restaurant = await prisma.restaurant.findUnique({ where: { ownerId: user.id } });
-            if (!restaurant || restaurant.approved !== true) {
+            const restaurantProfile = await prisma.restaurantProfile.findUnique({ where: { userId: user.id } });
+            if (!restaurantProfile) {
+                throw new Error('Restaurant profile not found');
+            }
+            if (restaurantProfile.status === 'PENDING') {
                 throw new Error('Restaurant account pending admin approval');
+            }
+            if (restaurantProfile.status === 'REJECTED') {
+                throw new Error('Restaurant account has been rejected');
+            }
+            if (restaurantProfile.status === 'SUSPENDED') {
+                throw new Error('Restaurant account has been suspended');
             }
         }
 

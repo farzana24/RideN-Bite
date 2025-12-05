@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
+import { AccountStatus } from '@prisma/client';
 
 export class AdminRestaurantController {
     // Get all restaurants with filters
@@ -11,18 +12,22 @@ export class AdminRestaurantController {
 
             let where: any = {};
 
-            // Filter by status
+            // Filter by status via RestaurantProfile
             if (status === 'pending') {
-                where.approved = false;
+                where.owner = { restaurantProfile: { status: AccountStatus.PENDING } };
             } else if (status === 'active') {
-                where.approved = true;
+                where.owner = { restaurantProfile: { status: AccountStatus.ACTIVE } };
+            } else if (status === 'suspended') {
+                where.owner = { restaurantProfile: { status: AccountStatus.SUSPENDED } };
+            } else if (status === 'rejected') {
+                where.owner = { restaurantProfile: { status: AccountStatus.REJECTED } };
             }
 
             // Search filter
             if (search) {
                 where.OR = [
                     { name: { contains: search as string, mode: 'insensitive' } },
-                    { email: { contains: search as string, mode: 'insensitive' } },
+                    { owner: { email: { contains: search as string, mode: 'insensitive' } } },
                 ];
             }
 
@@ -42,6 +47,7 @@ export class AdminRestaurantController {
                                 restaurantProfile: {
                                     select: {
                                         storefrontImage: true,
+                                        status: true,
                                     },
                                 },
                             },
@@ -62,24 +68,26 @@ export class AdminRestaurantController {
                 prisma.restaurant.count({ where }),
             ]);
 
-            const formattedRestaurants = restaurants.map(restaurant => ({
-                id: restaurant.id,
-                ownerId: restaurant.ownerId,
-                ownerName: restaurant.owner.name,
-                ownerEmail: restaurant.owner.email,
-                name: restaurant.name,
-                address: restaurant.address,
-                lat: restaurant.lat,
-                lng: restaurant.lng,
-                phone: restaurant.owner.phone,
-                storefrontImage: restaurant.owner.restaurantProfile?.storefrontImage,
-                approved: restaurant.approved,
-                suspended: false, // TODO: Add suspended field to schema
-                createdAt: restaurant.createdAt.toISOString(),
-                updatedAt: restaurant.updatedAt.toISOString(),
-                menuItemsCount: restaurant._count.menuItems,
-                ordersCount: restaurant._count.orders,
-            }));
+            const formattedRestaurants = restaurants.map(restaurant => {
+                const profileStatus = restaurant.owner.restaurantProfile?.status;
+                return {
+                    id: restaurant.id,
+                    ownerId: restaurant.ownerId,
+                    ownerName: restaurant.owner.name,
+                    ownerEmail: restaurant.owner.email,
+                    name: restaurant.name,
+                    address: restaurant.address,
+                    lat: restaurant.lat,
+                    lng: restaurant.lng,
+                    phone: restaurant.owner.phone,
+                    storefrontImage: restaurant.owner.restaurantProfile?.storefrontImage,
+                    status: profileStatus || AccountStatus.PENDING,
+                    createdAt: restaurant.createdAt.toISOString(),
+                    updatedAt: restaurant.updatedAt.toISOString(),
+                    menuItemsCount: restaurant._count.menuItems,
+                    ordersCount: restaurant._count.orders,
+                };
+            });
 
             res.json({
                 success: true,
@@ -117,6 +125,7 @@ export class AdminRestaurantController {
                             restaurantProfile: {
                                 select: {
                                     storefrontImage: true,
+                                    status: true,
                                 },
                             },
                         },
@@ -150,7 +159,7 @@ export class AdminRestaurantController {
                     lng: restaurant.lng,
                     phone: restaurant.owner.phone,
                     storefrontImage: restaurant.owner.restaurantProfile?.storefrontImage,
-                    approved: restaurant.approved,
+                    status: restaurant.owner.restaurantProfile?.status || AccountStatus.PENDING,
                     createdAt: restaurant.createdAt.toISOString(),
                     updatedAt: restaurant.updatedAt.toISOString(),
                     menuItemsCount: restaurant._count.menuItems,
@@ -172,18 +181,31 @@ export class AdminRestaurantController {
             const { id } = req.params;
             const { approved, notes } = req.body;
 
-            const restaurant = await prisma.restaurant.update({
+            // Get the restaurant to find the owner
+            const restaurant = await prisma.restaurant.findUnique({
                 where: { id: parseInt(id) },
-                data: {
-                    approved: approved === true,
-                },
+                select: { ownerId: true, name: true },
+            });
+
+            if (!restaurant) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Restaurant not found',
+                });
+            }
+
+            // Update the RestaurantProfile status
+            const newStatus = approved ? AccountStatus.ACTIVE : AccountStatus.REJECTED;
+            await prisma.restaurantProfile.update({
+                where: { userId: restaurant.ownerId },
+                data: { status: newStatus },
             });
 
             // TODO: Send email notification to restaurant owner
 
             res.json({
                 success: true,
-                data: restaurant,
+                data: { id: parseInt(id), status: newStatus },
                 message: `Restaurant ${approved ? 'approved' : 'rejected'} successfully`,
             });
         } catch (error: any) {
@@ -201,18 +223,29 @@ export class AdminRestaurantController {
             const { id } = req.params;
             const { suspended } = req.body;
 
-            // For now, we'll use the approved field inversely
-            // TODO: Add proper suspended field to schema
-            const restaurant = await prisma.restaurant.update({
+            // Get the restaurant to find the owner
+            const restaurant = await prisma.restaurant.findUnique({
                 where: { id: parseInt(id) },
-                data: {
-                    approved: !suspended,
-                },
+                select: { ownerId: true },
+            });
+
+            if (!restaurant) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Restaurant not found',
+                });
+            }
+
+            // Update RestaurantProfile status
+            const newStatus = suspended ? AccountStatus.SUSPENDED : AccountStatus.ACTIVE;
+            await prisma.restaurantProfile.update({
+                where: { userId: restaurant.ownerId },
+                data: { status: newStatus },
             });
 
             res.json({
                 success: true,
-                data: restaurant,
+                data: { id: parseInt(id), status: newStatus },
                 message: `Restaurant ${suspended ? 'suspended' : 'reactivated'} successfully`,
             });
         } catch (error: any) {

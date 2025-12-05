@@ -1,5 +1,5 @@
 import { client } from '../../api/client';
-import type { RestaurantData, PaginatedResponse } from '../types';
+import type { RestaurantData, PaginatedResponse, AccountStatus } from '../types';
 
 export const restaurantApi = {
     // Get all restaurants with filters
@@ -24,7 +24,7 @@ export const restaurantApi = {
         id: number,
         approved: boolean,
         notes: string
-    ): Promise<{ success: boolean }> {
+    ): Promise<{ success: boolean; data: { id: number; status: AccountStatus } }> {
         const response = await client.put(`/admin/restaurants/${id}/approve`, {
             approved,
             notes,
@@ -36,7 +36,7 @@ export const restaurantApi = {
     async suspendRestaurant(
         id: number,
         suspended: boolean
-    ): Promise<{ success: boolean }> {
+    ): Promise<{ success: boolean; data: { id: number; status: AccountStatus } }> {
         const response = await client.put(`/admin/restaurants/${id}/suspend`, {
             suspended,
         });

@@ -27,7 +27,6 @@ async function syncRestaurants() {
                     address: profile.address,
                     lat: profile.lat,
                     lng: profile.lng,
-                    approved: profile.status === 'ACTIVE',
                 },
             });
             console.log(`✓ Created Restaurant for ${profile.businessName} (User: ${profile.user.email})`);

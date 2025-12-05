@@ -202,10 +202,12 @@ export function RestaurantsManagement() {
                                                     {restaurant.address}
                                                 </TableCell>
                                                 <TableCell>
-                                                    {restaurant.suspended ? (
+                                                    {restaurant.status === 'SUSPENDED' ? (
                                                         <Badge variant="destructive">Suspended</Badge>
-                                                    ) : restaurant.approved ? (
+                                                    ) : restaurant.status === 'ACTIVE' ? (
                                                         <Badge variant="success">Active</Badge>
+                                                    ) : restaurant.status === 'REJECTED' ? (
+                                                        <Badge variant="destructive">Rejected</Badge>
                                                     ) : (
                                                         <Badge variant="warning">Pending</Badge>
                                                     )}
@@ -217,7 +219,7 @@ export function RestaurantsManagement() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
-                                                        {!restaurant.approved && (
+                                                        {restaurant.status === 'PENDING' && (
                                                             <>
                                                                 <Button
                                                                     size="sm"
@@ -237,7 +239,7 @@ export function RestaurantsManagement() {
                                                                 </Button>
                                                             </>
                                                         )}
-                                                        {restaurant.approved && !restaurant.suspended && (
+                                                        {restaurant.status === 'ACTIVE' && (
                                                             <Button
                                                                 size="sm"
                                                                 variant="outline"
@@ -260,6 +262,31 @@ export function RestaurantsManagement() {
                                                             >
                                                                 <X className="mr-1 h-4 w-4" />
                                                                 Suspend
+                                                            </Button>
+                                                        )}
+                                                        {restaurant.status === 'SUSPENDED' && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={async () => {
+                                                                    try {
+                                                                        await restaurantApi.suspendRestaurant(restaurant.id, false);
+                                                                        toast({
+                                                                            title: "Restaurant Reactivated",
+                                                                            description: `${restaurant.name} has been reactivated.`,
+                                                                        });
+                                                                        loadRestaurants();
+                                                                    } catch (error) {
+                                                                        toast({
+                                                                            title: "Error",
+                                                                            description: "Failed to reactivate restaurant.",
+                                                                            variant: "destructive",
+                                                                        });
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <Check className="mr-1 h-4 w-4" />
+                                                                Reactivate
                                                             </Button>
                                                         )}
                                                         <Button
@@ -377,10 +404,12 @@ export function RestaurantsManagement() {
                                 </div>
                                 <div>
                                     <p className="text-xs uppercase tracking-wide text-slate-500">Status</p>
-                                    {restaurantDetails.suspended ? (
+                                    {restaurantDetails.status === 'SUSPENDED' ? (
                                         <Badge variant="destructive">Suspended</Badge>
-                                    ) : restaurantDetails.approved ? (
+                                    ) : restaurantDetails.status === 'ACTIVE' ? (
                                         <Badge variant="success">Active</Badge>
+                                    ) : restaurantDetails.status === 'REJECTED' ? (
+                                        <Badge variant="destructive">Rejected</Badge>
                                     ) : (
                                         <Badge variant="warning">Pending</Badge>
                                     )}

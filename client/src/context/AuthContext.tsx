@@ -18,28 +18,38 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<User | null>(() => {
+        const storedUser = localStorage.getItem('user');
+        return storedUser ? JSON.parse(storedUser) : null;
+    });
     const [token, setToken] = useState<string | null>(localStorage.getItem('accessToken'));
 
     useEffect(() => {
-        if (token) {
-            // Ideally verify token with backend or decode it
-            // For now, we rely on the presence of the token
-            // You might want to fetch user details here if not stored
+        // If we have a token but no user, try to restore from localStorage
+        if (token && !user) {
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+                setUser(JSON.parse(storedUser));
+            } else {
+                // No user data available, clear the invalid token
+                localStorage.removeItem('accessToken');
+                setToken(null);
+            }
         }
-    }, [token]);
+    }, [token, user]);
 
     const login = (newToken: string, newUser: User) => {
         setToken(newToken);
         setUser(newUser);
         localStorage.setItem('accessToken', newToken);
-        // Store user info if needed, or fetch on load
+        localStorage.setItem('user', JSON.stringify(newUser));
     };
 
     const logout = () => {
         setToken(null);
         setUser(null);
         localStorage.removeItem('accessToken');
+        localStorage.removeItem('user');
     };
 
     return (

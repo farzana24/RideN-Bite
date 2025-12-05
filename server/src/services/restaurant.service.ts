@@ -1,6 +1,7 @@
 import { prisma } from '../lib/prisma';
 import { Prisma } from '@prisma/client';
 import { uploadService } from './uploadService';
+import { socketService } from './socketService';
 
 export class RestaurantService {
   // Get restaurant by owner user ID
@@ -498,12 +499,19 @@ export class RestaurantService {
         dbStatus = status;
     }
 
+    // Get restaurant name for notification
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { id: restaurantId },
+      select: { name: true },
+    });
+
     const order = await prisma.order.update({
       where: { id: orderId },
       data: { status: dbStatus as any },
       include: {
         user: {
           select: {
+            id: true,
             name: true,
             phone: true,
           },
@@ -528,6 +536,25 @@ export class RestaurantService {
           },
         },
       },
+    });
+
+    // Send real-time notification to customer
+    const statusMessages: Record<string, string> = {
+      PENDING: 'Your order has been placed',
+      CONFIRMED: 'Restaurant confirmed your order',
+      PREPARING: 'Your order is being prepared',
+      READY: 'Your order is ready for pickup',
+      ASSIGNED: 'A rider has been assigned',
+      PICKED_UP: 'Your order is on the way!',
+      DELIVERED: 'Your order has been delivered',
+      CANCELLED: 'Your order has been cancelled',
+    };
+
+    socketService.sendOrderNotification(order.user.id, {
+      orderId: order.id,
+      restaurantName: restaurant?.name || 'Restaurant',
+      status: dbStatus,
+      message: statusMessages[dbStatus] || 'Order status updated',
     });
 
     return {

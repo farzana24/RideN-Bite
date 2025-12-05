@@ -20,8 +20,17 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
     (response) => response,
     async (error) => {
-        // Handle 401 and refresh token logic here if needed
-        // For now, just reject
+        // Handle 401 Unauthorized responses
+        if (error.response?.status === 401) {
+            // Clear auth data from localStorage
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('user');
+            
+            // Redirect to login page if not already there
+            if (window.location.pathname !== '/login') {
+                window.location.href = '/login';
+            }
+        }
         return Promise.reject(error);
     }
 );

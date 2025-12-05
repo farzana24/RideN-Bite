@@ -8,6 +8,7 @@ import type {
     PaginatedResponse,
     FilterParams,
     AuditLog,
+    AccountStatus,
 } from "../types";
 
 // Mock data generators
@@ -78,6 +79,10 @@ function generateMockRestaurants(count: number): RestaurantData[] {
     ];
 
     for (let i = 0; i < count; i++) {
+        const statuses: AccountStatus[] = ['PENDING', 'ACTIVE', 'REJECTED', 'SUSPENDED'];
+        const randomStatus = Math.random();
+        const status: AccountStatus = randomStatus > 0.7 ? 'PENDING' : randomStatus > 0.1 ? 'ACTIVE' : randomStatus > 0.05 ? 'SUSPENDED' : 'REJECTED';
+        
         restaurants.push({
             id: i + 1,
             ownerId: 100 + i,
@@ -91,7 +96,7 @@ function generateMockRestaurants(count: number): RestaurantData[] {
             address: `${Math.floor(Math.random() * 999) + 1} Main St, Dhaka`,
             lat: 23.8 + Math.random() * 0.1,
             lng: 90.4 + Math.random() * 0.1,
-            approved: Math.random() > 0.3,
+            status,
             createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
             updatedAt: new Date().toISOString(),
             menuItemsCount: Math.floor(Math.random() * 50) + 10,
@@ -190,7 +195,7 @@ export const mockApi = {
             activeDeliveriesChange: -5.2,
             avgDeliveryTime: 28,
             avgDeliveryTimeChange: -3.1,
-            pendingRestaurants: mockRestaurants.filter((r) => !r.approved).length,
+            pendingRestaurants: mockRestaurants.filter((r) => r.status === 'PENDING').length,
         };
     },
 
@@ -257,9 +262,13 @@ export const mockApi = {
         let filtered = [...mockRestaurants];
 
         if (status === "pending") {
-            filtered = filtered.filter((r) => !r.approved);
+            filtered = filtered.filter((r) => r.status === 'PENDING');
         } else if (status === "active") {
-            filtered = filtered.filter((r) => r.approved);
+            filtered = filtered.filter((r) => r.status === 'ACTIVE');
+        } else if (status === "suspended") {
+            filtered = filtered.filter((r) => r.status === 'SUSPENDED');
+        } else if (status === "rejected") {
+            filtered = filtered.filter((r) => r.status === 'REJECTED');
         }
 
         if (search) {
@@ -293,7 +302,7 @@ export const mockApi = {
         await delay(500);
         const restaurant = mockRestaurants.find((r) => r.id === id);
         if (restaurant) {
-            restaurant.approved = approved;
+            restaurant.status = approved ? 'ACTIVE' : 'REJECTED';
         }
         console.log(`Restaurant ${id} approved: ${approved}, notes: ${notes}`);
         return { success: true };
@@ -303,7 +312,7 @@ export const mockApi = {
         await delay(500);
         const restaurant = mockRestaurants.find((r) => r.id === id);
         if (restaurant) {
-            restaurant.suspended = suspended;
+            restaurant.status = suspended ? 'SUSPENDED' : 'ACTIVE';
         }
         return { success: true };
     },
