@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Input } from "../../admin/components/ui/input";
 import { Button } from "../../admin/components/ui/button";
 import type { MenuItem } from "../types";
 import { menuItemSchema, type MenuFormValues } from "../types/schemas";
+import { Upload, X, Image as ImageIcon } from "lucide-react";
 
 const categories = [
     "BIRYANI",
@@ -36,6 +37,40 @@ export function MenuForm({ defaultValues, onSubmit, onClose }: MenuFormProps) {
     });
     const [error, setError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    const [imagePreview, setImagePreview] = useState<string>(defaultValues?.imageUrl ?? "");
+    const [useUrlInput, setUseUrlInput] = useState<boolean>(!!(defaultValues?.imageUrl && !defaultValues.imageUrl.startsWith("data:")));
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith("image/")) {
+            setError("Please upload an image file");
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            setError("Image size must be less than 5MB");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64 = reader.result as string;
+            setValues((prev) => ({ ...prev, imageUrl: base64 }));
+            setImagePreview(base64);
+            setError(null);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const removeImage = () => {
+        setValues((prev) => ({ ...prev, imageUrl: "" }));
+        setImagePreview("");
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+    };
 
     const handleChange = (field: keyof MenuFormValues, value: string | number | boolean) => {
         setValues((prev) => ({ ...prev, [field]: value }));
@@ -126,8 +161,71 @@ export function MenuForm({ defaultValues, onSubmit, onClose }: MenuFormProps) {
                 </div>
             </div>
             <div>
-                <label className="text-sm text-slate-500">Image URL</label>
-                <Input value={values.imageUrl} onChange={(e) => handleChange("imageUrl", e.target.value)} />
+                <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm text-slate-500">Dish Image</label>
+                    <button
+                        type="button"
+                        className="text-xs text-amber-600 hover:text-amber-700 dark:text-amber-400"
+                        onClick={() => {
+                            setUseUrlInput(!useUrlInput);
+                            if (!useUrlInput) {
+                                removeImage();
+                            }
+                        }}
+                    >
+                        {useUrlInput ? "Upload image instead" : "Use URL instead"}
+                    </button>
+                </div>
+                {useUrlInput ? (
+                    <Input
+                        value={values.imageUrl}
+                        onChange={(e) => {
+                            handleChange("imageUrl", e.target.value);
+                            setImagePreview(e.target.value);
+                        }}
+                        placeholder="https://example.com/dish-image.jpg"
+                    />
+                ) : (
+                    <div className="space-y-3">
+                        {imagePreview ? (
+                            <div className="relative inline-block">
+                                <img
+                                    src={imagePreview}
+                                    alt="Dish preview"
+                                    className="h-32 w-32 rounded-xl object-cover border border-slate-200 dark:border-slate-700"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={removeImage}
+                                    className="absolute -right-2 -top-2 rounded-full bg-rose-500 p-1 text-white hover:bg-rose-600 transition"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            </div>
+                        ) : (
+                            <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-6 transition hover:border-amber-400 hover:bg-amber-50/50 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-amber-500 dark:hover:bg-amber-500/5">
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={handleImageUpload}
+                                />
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className="rounded-full bg-amber-100 p-3 dark:bg-amber-500/10">
+                                        <Upload className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                            Click to upload image
+                                        </p>
+                                        <p className="text-xs text-slate-500">PNG, JPG up to 5MB</p>
+                                    </div>
+                                </div>
+                            </label>
+                        )}
+                    </div>
+                )}
             </div>
             <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-900/60">
                 <div>

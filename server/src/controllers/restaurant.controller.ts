@@ -52,8 +52,8 @@ class RestaurantController {
         openingHours: openingHours?.opening || data.openingHours || '10:00',
         closingHours: openingHours?.closing || data.closingHours || '23:00',
         licenseNumber: data.licenseNumber || '',
-        logoUrl: data.logoUrl || null,
-        coverPhotoUrl: data.coverPhotoUrl || null,
+        logoUrl: updated.logoUrl || updated.profile?.storefrontImage || null,
+        coverPhotoUrl: updated.coverPhotoUrl || null,
       });
     } catch (error) {
       console.error('Error updating profile:', error);

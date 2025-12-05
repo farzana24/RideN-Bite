@@ -50,7 +50,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
                         {!isCollapsed && (
                             <div className="space-y-1">
                                 <p className="text-xs uppercase tracking-[0.4em] text-amber-500">RideN'Bite</p>
-                                <p className="text-xl font-semibold text-slate-900 dark:text-white">Kitchen Console</p>
+                                <p className="text-xl mb-4 pb-4 font-semibold text-slate-900 dark:text-white">Kitchen Console</p>
                             </div>
                         )}
                     </Link>

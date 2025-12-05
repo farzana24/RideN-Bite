@@ -5,7 +5,7 @@ export const restaurantNav = [
     { label: "Menu Management", href: "/restaurant/menu", icon: ChefHat },
     { label: "Orders", href: "/restaurant/orders", icon: ClipboardList },
     { label: "Earnings", href: "/restaurant/earnings", icon: Wallet },
-    { label: "Analytics", href: "/restaurant/analytics", icon: LineChart },
+    // { label: "Analytics", href: "/restaurant/analytics", icon: LineChart },
     { label: "Restaurant Profile", href: "/restaurant/profile", icon: Building2 },
     { label: "Settings", href: "/restaurant/settings", icon: Settings },
 ];

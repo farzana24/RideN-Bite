@@ -8,7 +8,10 @@ export const menuItemSchema = z.object({
     price: z.number().positive(),
     cookingTime: z.number().int().positive(),
     spiceLevel: z.custom<SpiceLevel>(),
-    imageUrl: z.string().url().optional().or(z.literal("")),
+    imageUrl: z.string().optional().or(z.literal("")).refine(
+        (val) => !val || val.startsWith("data:image/") || val.startsWith("http://") || val.startsWith("https://"),
+        { message: "Must be a valid URL or uploaded image" }
+    ),
     isAvailable: z.boolean().default(true),
 });
 
@@ -20,8 +23,14 @@ export const profileSchema = z.object({
     openingHours: z.string(),
     closingHours: z.string(),
     licenseNumber: z.string().min(6),
-    logoUrl: z.string().url().optional().or(z.literal("")),
-    coverPhotoUrl: z.string().url().optional().or(z.literal("")),
+    logoUrl: z.string().optional().or(z.literal("")).refine(
+        (val) => !val || val.startsWith("data:image/") || val.startsWith("http://") || val.startsWith("https://"),
+        { message: "Must be a valid URL or uploaded image" }
+    ),
+    coverPhotoUrl: z.string().optional().or(z.literal("")).refine(
+        (val) => !val || val.startsWith("data:image/") || val.startsWith("http://") || val.startsWith("https://"),
+        { message: "Must be a valid URL or uploaded image" }
+    ),
 });
 
 export const payoutRequestSchema = z.object({

@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma';
 import { Prisma } from '@prisma/client';
+import { uploadService } from './uploadService';
 
 export class RestaurantService {
   // Get restaurant by owner user ID
@@ -54,6 +55,28 @@ export class RestaurantService {
 
     if (!restaurant) throw new Error('Restaurant not found');
 
+    // Handle logo image upload if base64 data is provided
+    let logoUrl = data.logoUrl;
+    if (logoUrl && logoUrl.startsWith('data:image/')) {
+      try {
+        logoUrl = await uploadService.uploadImage(logoUrl, 'restaurants/logos');
+      } catch (error) {
+        console.error('Failed to upload logo image:', error);
+        logoUrl = undefined; // Keep existing if upload fails
+      }
+    }
+
+    // Handle cover photo upload if base64 data is provided
+    let coverPhotoUrl = data.coverPhotoUrl;
+    if (coverPhotoUrl && coverPhotoUrl.startsWith('data:image/')) {
+      try {
+        coverPhotoUrl = await uploadService.uploadImage(coverPhotoUrl, 'restaurants/covers');
+      } catch (error) {
+        console.error('Failed to upload cover photo:', error);
+        coverPhotoUrl = undefined; // Keep existing if upload fails
+      }
+    }
+
     // Update restaurant basic info
     const updated = await prisma.restaurant.update({
       where: { id: restaurant.id },
@@ -62,6 +85,21 @@ export class RestaurantService {
         address: data.address,
       },
     });
+
+    // Build profile update data
+    const profileUpdateData: any = {
+      businessName: data.name,
+      address: data.address,
+      cuisine: data.category ? [data.category] : undefined,
+      openingHours: data.openingHours && data.closingHours 
+        ? { opening: data.openingHours, closing: data.closingHours } 
+        : undefined,
+    };
+
+    // Only update storefrontImage if a new image was uploaded or URL was provided
+    if (logoUrl !== undefined) {
+      profileUpdateData.storefrontImage = logoUrl || null;
+    }
 
     // Update or create restaurant profile
     const profile = await prisma.restaurantProfile.upsert({
@@ -75,18 +113,12 @@ export class RestaurantService {
           ? { opening: data.openingHours, closing: data.closingHours } 
           : Prisma.JsonNull,
         deliveryOptions: ['DELIVERY', 'PICKUP'],
+        storefrontImage: logoUrl || null,
       },
-      update: {
-        businessName: data.name,
-        address: data.address,
-        cuisine: data.category ? [data.category] : undefined,
-        openingHours: data.openingHours && data.closingHours 
-          ? { opening: data.openingHours, closing: data.closingHours } 
-          : undefined,
-      },
+      update: profileUpdateData,
     });
 
-    return { restaurant: updated, profile };
+    return { restaurant: updated, profile, logoUrl, coverPhotoUrl };
   }
 
   // Dashboard stats
@@ -248,6 +280,17 @@ export class RestaurantService {
   }
 
   async createMenuItem(restaurantId: number, data: any) {
+    // Handle image upload if base64 data is provided
+    let imageUrl = data.imageUrl || null;
+    if (imageUrl && imageUrl.startsWith('data:image/')) {
+      try {
+        imageUrl = await uploadService.uploadImage(imageUrl, 'menu-items');
+      } catch (error) {
+        console.error('Failed to upload menu item image:', error);
+        imageUrl = null;
+      }
+    }
+
     const item = await prisma.menuItem.create({
       data: {
         restaurantId,
@@ -259,7 +302,7 @@ export class RestaurantService {
         spiceLevel: data.spiceLevel,
         rating: 0,
         available: data.isAvailable !== false,
-        imageUrl: data.imageUrl || null,
+        imageUrl: imageUrl,
         tags: [],
       },
     });
@@ -296,7 +339,20 @@ export class RestaurantService {
     if (data.cookingTime !== undefined) updateData.cookingTime = data.cookingTime;
     if (data.spiceLevel !== undefined) updateData.spiceLevel = data.spiceLevel;
     if (data.isAvailable !== undefined) updateData.available = data.isAvailable;
-    if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
+    
+    // Handle image upload if base64 data is provided
+    if (data.imageUrl !== undefined) {
+      if (data.imageUrl && data.imageUrl.startsWith('data:image/')) {
+        try {
+          updateData.imageUrl = await uploadService.uploadImage(data.imageUrl, 'menu-items');
+        } catch (error) {
+          console.error('Failed to upload menu item image:', error);
+          // Keep the existing image if upload fails
+        }
+      } else {
+        updateData.imageUrl = data.imageUrl;
+      }
+    }
 
     const item = await prisma.menuItem.update({
       where: { id: itemId },
