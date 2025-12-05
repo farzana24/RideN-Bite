@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { KPICard } from "../components/KPICard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
-import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Badge } from "../components/ui/badge";
 import { mockApi } from "../services/mockData";
@@ -42,18 +41,7 @@ export function DashboardHome() {
         );
     }
 
-    // Mock data for charts
-    const ordersData = Array.from({ length: 30 }, (_, i) => ({
-        date: `${i + 1}`,
-        orders: Math.floor(Math.random() * 100) + 50,
-    }));
-
-    const orderSourcesData = [
-        { name: "Mobile App", value: 1234 },
-        { name: "Website", value: 876 },
-        { name: "Phone", value: 234 },
-    ];
-
+    
     const getStatusBadgeVariant = (status: string) => {
         switch (status) {
             case "DELIVERED":
@@ -117,66 +105,7 @@ export function DashboardHome() {
             </div>
 
             {/* Charts */}
-            <div className="grid gap-4 md:grid-cols-7">
-                {/* Orders Over Time */}
-                <Card className="col-span-4">
-                    <CardHeader>
-                        <CardTitle>Orders Overview</CardTitle>
-                        <CardDescription>Last 30 days</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <LineChart data={ordersData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="date" />
-                                <YAxis />
-                                <Tooltip />
-                                <Legend />
-                                <Line
-                                    type="monotone"
-                                    dataKey="orders"
-                                    stroke="#8884d8"
-                                    strokeWidth={2}
-                                />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-
-                {/* Order Sources */}
-                <Card className="col-span-3">
-                    <CardHeader>
-                        <CardTitle>Order Sources</CardTitle>
-                        <CardDescription>Distribution by platform</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                                <Pie
-                                    data={orderSourcesData}
-                                    cx="50%"
-                                    cy="50%"
-                                    labelLine={false}
-                                    label={({ name, percent }) =>
-                                        `${name}: ${(percent * 100).toFixed(0)}%`
-                                    }
-                                    outerRadius={80}
-                                    fill="#8884d8"
-                                    dataKey="value"
-                                >
-                                    {orderSourcesData.map((_entry, index) => (
-                                        <Cell
-                                            key={`cell-${index}`}
-                                            fill={COLORS[index % COLORS.length]}
-                                        />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-            </div>
+           
 
             {/* Recent Orders */}
             <Card>

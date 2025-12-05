@@ -5,6 +5,7 @@ import { RestaurantsManagement } from "./pages/RestaurantsManagement";
 import { OrdersManagement } from "./pages/OrdersManagement";
 import { UsersManagement } from "./pages/UsersManagement";
 import { RidersTracking } from "./pages/RidersTracking";
+import { RiderApprovals } from "./pages/RiderApprovals";
 import { Analytics } from "./pages/Analytics";
 import { Settings } from "./pages/Settings";
 
@@ -17,6 +18,7 @@ export function AdminApp() {
                 <Route path="/orders" element={<OrdersManagement />} />
                 <Route path="/users" element={<UsersManagement />} />
                 <Route path="/riders" element={<RidersTracking />} />
+                <Route path="/riders/approvals" element={<RiderApprovals />} />
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/settings" element={<Settings />} />
             </Routes>

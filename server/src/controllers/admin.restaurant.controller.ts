@@ -16,10 +16,6 @@ export class AdminRestaurantController {
                 where.approved = false;
             } else if (status === 'active') {
                 where.approved = true;
-                where.OR = [
-                    { restaurantProfile: { is: null } },
-                    { restaurantProfile: { status: 'ACTIVE' } }
-                ];
             }
 
             // Search filter

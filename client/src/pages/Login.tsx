@@ -25,7 +25,9 @@ const Login: React.FC = () => {
                 } else if (user.role === 'RESTAURANT') {
                     navigate('/restaurant');
                 }  else if (user.role === 'CUSTOMER') {
-                    navigate('/restaurant');
+                    navigate('/customer');
+                }  else if (user.role === 'RIDER') {
+                    navigate('/rider');
                 } else {
                     navigate('/dashboard');
                 }

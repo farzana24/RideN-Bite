@@ -47,6 +47,13 @@ const Register: React.FC = () => {
 
     // Rider‑specific fields
     const [vehicleType, setVehicleType] = useState('BIKE');
+    const [nidPassport, setNidPassport] = useState('');
+    const [profilePhoto, setProfilePhoto] = useState('');
+    const [profilePhotoPreview, setProfilePhotoPreview] = useState('');
+    const [drivingLicense, setDrivingLicense] = useState('');
+    const [drivingLicensePreview, setDrivingLicensePreview] = useState('');
+    const [vehicleRegistration, setVehicleRegistration] = useState('');
+    const [vehicleRegistrationPreview, setVehicleRegistrationPreview] = useState('');
 
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -83,6 +90,36 @@ const Register: React.FC = () => {
         setStorefrontPreview('');
     };
 
+    // Generic file upload handler for riders
+    const handleFileUpload = (
+        e: React.ChangeEvent<HTMLInputElement>,
+        setFile: (file: string) => void,
+        setPreview: (preview: string) => void
+    ) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            setError('Please upload an image file');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            setError('Image size must be less than 5MB');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64 = reader.result as string;
+            setFile(base64);
+            setPreview(base64);
+            setError('');
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const requiresDocuments = vehicleType === 'BIKE' || vehicleType === 'CAR' || vehicleType === 'SCOOTER';
+
     // Form submission
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -105,27 +142,29 @@ const Register: React.FC = () => {
             }
             if (selectedRole === 'RIDER') {
                 payload.vehicleType = vehicleType;
+                payload.nidPassport = nidPassport;
+                if (profilePhoto) payload.profilePhoto = profilePhoto;
+                if (drivingLicense) payload.drivingLicense = drivingLicense;
+                if (vehicleRegistration) payload.vehicleRegistration = vehicleRegistration;
             }
 
             const res = await client.post('/auth/register', payload);
 
             if (res.data.success) {
                 const { user, tokens } = res.data.data;
-                if (user.role === 'RESTAURANT') {
+                if (user.role === 'RESTAURANT' || user.role === 'RIDER') {
                     // Show pending‑approval modal and redirect to login after a short delay
                     setShowApprovalMessage(true);
                     setTimeout(() => {
                         navigate('/login');
                     }, 5000);
                 } else {
-                    // Immediate login for other roles
+                    // Immediate login for other roles (CUSTOMER, ADMIN)
                     login(tokens.accessToken, user);
                     if (user.role === 'ADMIN') {
                         navigate('/admin');
                     } else if (user.role === 'CUSTOMER') {
                         navigate('/customer');
-                    } else if (user.role === 'RIDER') {
-                        navigate('/rider');
                     } else {
                         navigate('/dashboard');
                     }
@@ -134,7 +173,8 @@ const Register: React.FC = () => {
                 setError(res.data.message || 'Registration failed');
             }
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Registration failed');
+            console.error('Registration error:', err.response?.data);
+            setError(err.response?.data?.message || err.message || 'Registration failed');
         } finally {
             setLoading(false);
         }
@@ -314,20 +354,166 @@ const Register: React.FC = () => {
 
                         {/* Rider‑specific fields */}
                         {selectedRole === 'RIDER' && (
-                            <div>
-                                <label className="block text-gray-700 text-sm font-bold mb-2 ml-1">Vehicle Type</label>
-                                <select
-                                    className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-orange-500 focus:bg-white focus:ring-2 focus:ring-orange-200 outline-none transition-all duration-200"
-                                    value={vehicleType}
-                                    onChange={(e) => setVehicleType(e.target.value)}
-                                    required
-                                >
-                                    <option value="BIKE">Motorcycle</option>
-                                    <option value="BICYCLE">Bicycle</option>
-                                    <option value="CAR">Car</option>
-                                    <option value="SCOOTER">Scooter</option>
-                                </select>
-                            </div>
+                            <>
+                                {/* Profile Photo */}
+                                <div className="flex justify-center">
+                                    <div className="relative">
+                                        <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-green-100">
+                                            {profilePhotoPreview ? (
+                                                <img
+                                                    src={profilePhotoPreview}
+                                                    alt="Profile preview"
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="flex h-full w-full items-center justify-center bg-gray-100">
+                                                    <User className="h-10 w-10 text-gray-400" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <label
+                                            htmlFor="profile-upload"
+                                            className="absolute bottom-0 right-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-green-600 text-white shadow-lg hover:bg-green-700"
+                                        >
+                                            <Upload className="h-4 w-4" />
+                                            <input
+                                                id="profile-upload"
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => handleFileUpload(e, setProfilePhoto, setProfilePhotoPreview)}
+                                                className="hidden"
+                                            />
+                                        </label>
+                                    </div>
+                                </div>
+                                <p className="text-center text-sm text-gray-500 -mt-4">Upload profile picture</p>
+
+                                {/* NID/Passport */}
+                                <div>
+                                    <label className="block text-gray-700 text-sm font-bold mb-2 ml-1">
+                                        NID / Passport Number <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-200 outline-none transition-all duration-200"
+                                        placeholder="Enter your NID or Passport number"
+                                        value={nidPassport}
+                                        onChange={(e) => setNidPassport(e.target.value)}
+                                        required
+                                    />
+                                </div>
+
+                                {/* Vehicle Type */}
+                                <div>
+                                    <label className="block text-gray-700 text-sm font-bold mb-2 ml-1">
+                                        Vehicle Type <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-200 outline-none transition-all duration-200"
+                                        value={vehicleType}
+                                        onChange={(e) => setVehicleType(e.target.value)}
+                                        required
+                                    >
+                                        <option value="BIKE">Motorcycle</option>
+                                        <option value="CAR">Car</option>
+                                        <option value="SCOOTER">Scooter</option>
+                                        <option value="BICYCLE">Bicycle</option>
+                                    </select>
+                                </div>
+
+                                {/* Document Uploads (Motor Vehicles Only) */}
+                                {requiresDocuments && (
+                                    <div className="space-y-4 rounded-lg border-2 border-amber-200 bg-amber-50 p-4">
+                                        <h3 className="text-sm font-semibold text-amber-900">
+                                            Required Documents (Motor Vehicles)
+                                        </h3>
+
+                                        {/* Driving License */}
+                                        <div>
+                                            <label className="block text-gray-700 text-sm font-bold mb-2">
+                                                Driving License <span className="text-red-500">*</span>
+                                            </label>
+                                            {drivingLicensePreview ? (
+                                                <div className="relative">
+                                                    <img
+                                                        src={drivingLicensePreview}
+                                                        alt="Driving license"
+                                                        className="h-40 w-full rounded-lg border-2 border-gray-200 object-cover"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setDrivingLicense('');
+                                                            setDrivingLicensePreview('');
+                                                        }}
+                                                        className="absolute right-2 top-2 rounded-full bg-red-500 p-2 text-white hover:bg-red-600"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white p-6 hover:border-green-400">
+                                                    <Upload className="mb-2 h-8 w-8 text-gray-400" />
+                                                    <span className="text-sm text-gray-600">Upload Driving License</span>
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={(e) =>
+                                                            handleFileUpload(e, setDrivingLicense, setDrivingLicensePreview)
+                                                        }
+                                                        className="hidden"
+                                                        required={requiresDocuments}
+                                                    />
+                                                </label>
+                                            )}
+                                        </div>
+
+                                        {/* Vehicle Registration */}
+                                        <div>
+                                            <label className="block text-gray-700 text-sm font-bold mb-2">
+                                                Vehicle Registration Paper <span className="text-red-500">*</span>
+                                            </label>
+                                            {vehicleRegistrationPreview ? (
+                                                <div className="relative">
+                                                    <img
+                                                        src={vehicleRegistrationPreview}
+                                                        alt="Vehicle registration"
+                                                        className="h-40 w-full rounded-lg border-2 border-gray-200 object-cover"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setVehicleRegistration('');
+                                                            setVehicleRegistrationPreview('');
+                                                        }}
+                                                        className="absolute right-2 top-2 rounded-full bg-red-500 p-2 text-white hover:bg-red-600"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white p-6 hover:border-green-400">
+                                                    <Upload className="mb-2 h-8 w-8 text-gray-400" />
+                                                    <span className="text-sm text-gray-600">Upload Registration Paper</span>
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={(e) =>
+                                                            handleFileUpload(
+                                                                e,
+                                                                setVehicleRegistration,
+                                                                setVehicleRegistrationPreview
+                                                            )
+                                                        }
+                                                        className="hidden"
+                                                        required={requiresDocuments}
+                                                    />
+                                                </label>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </>
                         )}
 
                         <button
@@ -352,20 +538,40 @@ const Register: React.FC = () => {
                     </p>
                 </div>
 
-                {/* Admin approval modal for restaurant registrations */}
+                {/* Admin approval modal for restaurant and rider registrations */}
                 {showApprovalMessage && (
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                         <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl transform animate-in">
                             <div className="text-center">
-                                <div className="w-20 h-20 bg-gradient-to-r from-orange-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Store className="w-10 h-10 text-white" />
+                                <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                                    selectedRole === 'RIDER' 
+                                        ? 'bg-gradient-to-r from-green-500 to-green-600' 
+                                        : 'bg-gradient-to-r from-orange-500 to-red-600'
+                                }`}>
+                                    {selectedRole === 'RIDER' ? (
+                                        <Bike className="w-10 h-10 text-white" />
+                                    ) : (
+                                        <Store className="w-10 h-10 text-white" />
+                                    )}
                                 </div>
                                 <h2 className="text-2xl font-bold text-gray-800 mb-2">Registration Successful!</h2>
-                                <p className="text-gray-600 mb-4">Your restaurant account has been created.</p>
-                                <div className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded mb-4">
-                                    <p className="text-orange-800 font-semibold text-sm">⏳ Waiting for Admin Approval</p>
-                                    <p className="text-orange-700 text-sm mt-1">
-                                        An administrator will review your restaurant profile shortly. You'll be notified once approved.
+                                <p className="text-gray-600 mb-4">
+                                    Your {selectedRole === 'RIDER' ? 'rider' : 'restaurant'} account has been created.
+                                </p>
+                                <div className={`border-l-4 p-4 rounded mb-4 ${
+                                    selectedRole === 'RIDER'
+                                        ? 'bg-green-50 border-green-500'
+                                        : 'bg-orange-50 border-orange-500'
+                                }`}>
+                                    <p className={`font-semibold text-sm ${
+                                        selectedRole === 'RIDER' ? 'text-green-800' : 'text-orange-800'
+                                    }`}>
+                                        ⏳ Waiting for Admin Approval
+                                    </p>
+                                    <p className={`text-sm mt-1 ${
+                                        selectedRole === 'RIDER' ? 'text-green-700' : 'text-orange-700'
+                                    }`}>
+                                        An administrator will review your {selectedRole === 'RIDER' ? 'rider' : 'restaurant'} profile shortly. You'll be notified once approved.
                                     </p>
                                 </div>
                                 <p className="text-sm text-gray-500">Redirecting to login in 5 seconds...</p>

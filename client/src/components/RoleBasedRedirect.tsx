@@ -21,6 +21,10 @@ function RoleBasedRedirect() {
         return <Navigate to="/customer" replace />;
     }
 
+    if (user?.role === 'RIDER') {
+        return <Navigate to="/rider" replace />;
+    }
+
     return <Navigate to="/dashboard" replace />;
 }
 

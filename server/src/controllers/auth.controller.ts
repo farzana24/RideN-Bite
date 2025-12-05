@@ -16,6 +16,10 @@ const registerSchema = z.object({
     storefrontImage: z.string().optional(), // Base64 encoded image
     // Rider-specific
     vehicleType: z.enum(['BIKE', 'CAR', 'BICYCLE', 'SCOOTER']).optional(),
+    nidPassport: z.string().optional(),
+    profilePhoto: z.string().optional(),
+    drivingLicense: z.string().optional(),
+    vehicleRegistration: z.string().optional(),
 }).refine((data) => {
     // Phone is required for restaurant registrations
     if (data.role === 'RESTAURANT' && !data.phone) {
