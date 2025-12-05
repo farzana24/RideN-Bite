@@ -719,6 +719,68 @@ export class RestaurantService {
       },
     });
   }
+
+  async deleteRestaurantAccount(userId: number) {
+    // Get the restaurant first
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { ownerId: userId },
+    });
+
+    if (!restaurant) {
+      throw new Error('Restaurant not found');
+    }
+
+    // Delete in a transaction to ensure all related data is removed
+    await prisma.$transaction(async (tx) => {
+      // Delete restaurant settings
+      await tx.restaurantSettings.deleteMany({
+        where: { restaurantId: restaurant.id },
+      });
+
+      // Delete menu items
+      await tx.menuItem.deleteMany({
+        where: { restaurantId: restaurant.id },
+      });
+
+      // Delete order items related to orders from this restaurant
+      const orders = await tx.order.findMany({
+        where: { restaurantId: restaurant.id },
+        select: { id: true },
+      });
+      const orderIds = orders.map((o) => o.id);
+      
+      if (orderIds.length > 0) {
+        await tx.orderItem.deleteMany({
+          where: { orderId: { in: orderIds } },
+        });
+      }
+
+      // Delete orders
+      await tx.order.deleteMany({
+        where: { restaurantId: restaurant.id },
+      });
+
+      // Delete admin notifications related to this restaurant
+      await tx.adminNotification.deleteMany({
+        where: { restaurantId: restaurant.id },
+      });
+
+      // Delete restaurant profile
+      await tx.restaurantProfile.deleteMany({
+        where: { userId },
+      });
+
+      // Delete the restaurant
+      await tx.restaurant.delete({
+        where: { id: restaurant.id },
+      });
+
+      // Finally delete the user
+      await tx.user.delete({
+        where: { id: userId },
+      });
+    });
+  }
 }
 
 export const restaurantService = new RestaurantService();

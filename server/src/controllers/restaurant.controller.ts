@@ -303,6 +303,17 @@ class RestaurantController {
       res.status(500).json({ error: 'Failed to update settings' });
     }
   }
+
+  async deleteAccount(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user.userId;
+      await restaurantService.deleteRestaurantAccount(userId);
+      res.json({ success: true, message: 'Account deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      res.status(500).json({ error: 'Failed to delete account' });
+    }
+  }
 }
 
 export const restaurantController = new RestaurantController();

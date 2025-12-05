@@ -203,4 +203,22 @@ export class AuthService {
         const tokens = generateTokens(user.id, user.role);
         return { user, tokens };
     }
+
+    async changePassword(userId: number, currentPassword: string, newPassword: string) {
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        const isValid = await comparePassword(currentPassword, user.password);
+        if (!isValid) {
+            throw new Error('Current password is incorrect');
+        }
+
+        const hashedPassword = await hashPassword(newPassword);
+        await prisma.user.update({
+            where: { id: userId },
+            data: { password: hashedPassword },
+        });
+    }
 }

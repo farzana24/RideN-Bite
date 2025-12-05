@@ -37,4 +37,7 @@ router.get('/alerts', (req, res) => restaurantController.getAlerts(req, res));
 router.get('/settings/general', (req, res) => restaurantController.getGeneralSettings(req, res));
 router.patch('/settings/general', (req, res) => restaurantController.updateGeneralSettings(req, res));
 
+// Account
+router.delete('/account', (req, res) => restaurantController.deleteAccount(req, res));
+
 export default router;

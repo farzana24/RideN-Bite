@@ -36,6 +36,11 @@ const loginSchema = z.object({
     password: z.string(),
 });
 
+const changePasswordSchema = z.object({
+    currentPassword: z.string(),
+    newPassword: z.string().min(6),
+});
+
 export class AuthController {
     async register(req: Request, res: Response) {
         try {
@@ -54,6 +59,20 @@ export class AuthController {
             res.json({ success: true, data: result });
         } catch (error: any) {
             res.status(400).json({ success: false, message: error.message });
+        }
+    }
+
+    async changePassword(req: Request, res: Response) {
+        try {
+            const userId = (req as any).user?.userId;
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+            const data = changePasswordSchema.parse(req.body);
+            await authService.changePassword(userId, data.currentPassword, data.newPassword);
+            res.json({ success: true, message: 'Password changed successfully' });
+        } catch (error: any) {
+            res.status(400).json({ error: error.message });
         }
     }
 }
